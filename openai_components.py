@@ -8,25 +8,16 @@ class OpenAIAuthorize(Component):
     api_key: InArg[str]
     from_env: InArg[bool]
 
-    def __init__(self):
-        self.done = False
-        self.organization = InArg.empty()
-        self.key = InArg.empty()
-        self.from_env = InArg.empty()
-
     def execute(self, ctx) -> None:
         openai.organization = self.organization.value
         if self.from_env.value:
             openai.api_key = os.getenv("OPENAI_API_KEY")
         else:
-            openai.api_key = self.key.value
+            openai.api_key = self.api_key.value
 
 @xai_component
 class OpenAIGetModels(Component):
     models: OutArg[list]
-    def __init__(self):
-        self.done = False
-        self.models = OutArg.empty()
 
     def execute(self, ctx) -> None:
         self.models.value = openai.Model.list()
@@ -36,11 +27,6 @@ class OpenAIGetModels(Component):
 class OpenAIGetModel(Component):
     model_name: InCompArg[str]
     model: OutArg[any]
-
-    def __init__(self):
-        self.done = False
-        self.model_name = InCompArg.empty()
-        self.model = OutArg.empty()
 
     def execute(self, ctx) -> None:
         self.model.value = openai.Model.retrieve(self.model_name.value)
@@ -55,15 +41,6 @@ class OpenAIGenerate(Component):
     temperature: InArg[float]
     count: InArg[int]
     completion: OutArg[str]
-
-    def __init__(self):
-        self.done = False
-        self.model_name = InCompArg.empty()
-        self.prompt = InCompArg.empty()
-        self.max_tokens = InArg.empty()
-        self.temperature = InArg.empty()
-        self.count = InArg.empty()
-        self.completion = OutArg.empty()
 
     def execute(self, ctx) -> None:
         result = openai.Completion.create(
@@ -88,15 +65,6 @@ class OpenAIEdit(Component):
     count: InArg[int]
     temperature: InArg[float]
     edited: OutArg[any]
-
-    def __init__(self):
-        self.done = False
-        self.model_name = InCompArg.empty()
-        self.prompt = InCompArg.empty()
-        self.instruction = InCompArg.empty()
-        self.count = InArg.empty()
-        self.temperature = InArg.empty()
-        self.edited = OutArg.empty()
 
     def execute(self, ctx) -> None:
         result = openai.Edit.create(
