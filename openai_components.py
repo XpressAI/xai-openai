@@ -1,4 +1,5 @@
 from xai_components.base import InArg, OutArg, InCompArg, Component, BaseComponent, xai_component
+import json
 import openai
 import os
 
@@ -7,6 +8,7 @@ class OpenAIAuthorize(Component):
     organization: InArg[str]
     api_key: InArg[str]
     from_env: InArg[bool]
+    proxy: InArg[str]
 
     def execute(self, ctx) -> None:
         openai.organization = self.organization.value
@@ -14,6 +16,11 @@ class OpenAIAuthorize(Component):
             openai.api_key = os.getenv("OPENAI_API_KEY")
         else:
             openai.api_key = self.api_key.value
+        if self.proxy.value:
+            try:
+                openai.proxy = json.loads(self.proxy.value)
+            except ValueError:
+                openai.proxy = self.proxy.value
 
 @xai_component
 class OpenAIGetModels(Component):
