@@ -59,6 +59,46 @@ class OpenAIGenerate(Component):
         else:
             self.completion.value = [r['text'] for r in result['choices']]
 
+@xai_component
+class OpenAIChat(Component):
+    model_name: InCompArg[str]
+    system_prompt: InCompArg[str]
+    user_prompt: InCompArg[str]
+    max_tokens: InArg[int]
+    temperature: InArg[float]
+    count: InArg[int]
+    completion: OutArg[str]
+    
+    messages: list
+    
+    def __init__(self):
+        super().__init__()
+        self.messages = []
+
+    def execute(self, ctx) -> None:
+        if not self.messages:
+            self.messages = [
+                {"role": "system", "content": self.system_prompt.value},
+                {"role": "user", "content": self.user_prompt.value}
+            ]
+        else:
+            self.messages.append({"role": "user", "content": self.user_prompt.value })
+        
+        
+        result = openai.ChatCompletion.create(
+            model=self.model_name.value,
+            messages=self.messages,
+            max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
+            temperature=self.temperature.value if self.temperature.value is not None else 1,
+            n=self.count.value if self.count.value is not None else 1
+        )
+        
+
+        if self.count.value is None or self.count.value == 1:
+            response = result['choices'][0]['message']
+            self.messages.append(response)
+        self.completion.value = result['choices'][0]['message']['content']
+
 
 @xai_component
 class OpenAIEdit(Component):
