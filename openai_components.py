@@ -1,14 +1,15 @@
 from xai_components.base import InArg, OutArg, InCompArg, Component, BaseComponent, xai_component
-import json
 import openai
 import os
+import requests
+import shutil
+
 
 @xai_component
 class OpenAIAuthorize(Component):
     organization: InArg[str]
     api_key: InArg[str]
     from_env: InArg[bool]
-    proxy: InArg[str]
 
     def execute(self, ctx) -> None:
         openai.organization = self.organization.value
@@ -16,11 +17,6 @@ class OpenAIAuthorize(Component):
             openai.api_key = os.getenv("OPENAI_API_KEY")
         else:
             openai.api_key = self.api_key.value
-        if self.proxy.value:
-            try:
-                openai.proxy = json.loads(self.proxy.value)
-            except ValueError:
-                openai.proxy = self.proxy.value
 
 @xai_component
 class OpenAIGetModels(Component):
@@ -87,3 +83,59 @@ class OpenAIEdit(Component):
         else:
             self.edited.value = [r['text'] for r in result['choices']]
 
+@xai_component
+class OpenAIImageCreate(Component):
+    prompt: InCompArg[str]
+    image_count: InArg[int]
+    size: InArg[str]
+    image_urls: OutArg[list]
+
+    def execute(self, ctx) -> None:
+        result = openai.Image.create(
+            prompt=self.prompt.value,
+            n=self.image_count.value if self.image_count.value is not None else 1,
+            size=self.size.value if self.size.value is not None else "256x256"
+        )
+
+        self.image_urls.value = [d['url'] for d in result['data']]
+
+
+
+@xai_component
+class DownloadImages(Component):
+    image_urls: InCompArg[list]
+    file_path: InCompArg[list]
+    
+    def execute(self, ctx) -> None:
+        i = 0
+        for image_url in self.image_urls.value:
+            response = requests.get(image_url, stream=True)
+            with open(self.file_path.value[i], 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            i += 1
+
+
+@xai_component
+class OpenAIImageCreateVariation(Component):
+    image_path: InCompArg[str]
+    image_count: InArg[int]
+    size: InArg[str]
+    image_urls: OutArg[list]
+
+    def execute(self, ctx) -> None:
+        result = openai.Image.create(
+            prompt=self.prompt.value,
+            n=self.image_count.value if self.image_count.value is not None else 1,
+            size=self.size.value if self.size.value is not None else "256x256"
+        )
+
+        self.image_urls.value = [d['url'] for d in result['data']]
+        
+@xai_component
+class TakeNthElement(Component):
+    values: InCompArg[list]
+    index: InCompArg[int]
+    out: OutArg[any]
+    
+    def execute(self, ctx) -> None:
+        self.out.value = self.values.value[self.index.value]
