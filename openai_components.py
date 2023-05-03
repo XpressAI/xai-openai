@@ -170,7 +170,27 @@ class OpenAIImageCreateVariation(Component):
         )
 
         self.image_urls.value = [d['url'] for d in result['data']]
+        
+@xai_component
+class OpenAIImageEdit(Component):
+    prompt:InCompArg[str]
+    image: InCompArg[any]
+    mask: InArg[any]
+    image_count: InArg[int]
+    size: InArg[str]
+    image_urls: OutArg[list]
 
+    def execute(self, ctx) -> None:
+        result = openai.Image.create_edit(
+            image=self.image.value,
+            mask=self.mask.value,
+            prompt=self.prompt.value,
+            n=self.image_count.value if self.image_count.value is not None else 1,
+            size=self.size.value if self.size.value is not None else "256x256"
+        )
+
+        self.image_urls.value = [d['url'] for d in result['data']]
+        
 @xai_component
 class TakeNthElement(Component):
     values: InCompArg[list]
