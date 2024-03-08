@@ -1,8 +1,51 @@
 from xai_components.base import InArg, OutArg, InCompArg, Component, BaseComponent, secret, xai_component
 import openai
+from openai import OpenAI
+
 import os
 import requests
 import shutil
+
+
+class Conversation:
+    def __init__(self):
+        self.conversation_history = []
+
+    def add_message(self, role, content):
+        message = {"role": role, "content": content}
+        self.conversation_history.append(message)
+
+    def display_conversation(self, detailed=False):
+        for message in self.conversation_history:
+            print(f"{message['role']}: {message['content']}\n\n")
+            
+@xai_component
+class OpenAIMakeConversation(Component):
+    """Creates a conversation object to hold conversation history.
+    """
+    
+    prev: InArg[Conversation]
+    system_msg: InArg[str]
+    user_msg: InArg[str]
+    assistant_msg: InArg[str]
+    function_msg: InArg[str]
+    
+    conversation: OutArg[Conversation]
+    
+    def execute(self, ctx) -> None:
+        conv = Conversation()
+        if self.prev.value is not None:
+            conv.conversation_history.extend(self.prev.value.conversation_history)
+        if self.system_msg.value is not None:
+            conv.add_message("system", self.system_msg.value)
+        if self.user_msg.value is not None:
+            conv.add_message("user", self.user_msg.value)
+        if self.assistant_msg.value is not None:
+            conv.add_message("assistant", self.assistant_msg.value)
+        if self.function_msg.value is not None:
+            conv.add_message("function", self.function_msg.value)
+            
+        self.conversation.value = conv
 
 
 @xai_component
@@ -18,16 +61,20 @@ class OpenAIAuthorize(Component):
     - from_env: Boolean value indicating whether the API key is to be fetched from environment variables. 
     """
     organization: InArg[secret]
+    base_url: InArg[str]
     api_key: InArg[secret]
     from_env: InArg[bool]
 
     def execute(self, ctx) -> None:
         openai.organization = self.organization.value
+        openai.base_url= self.base_url.value
         if self.from_env.value:
             openai.api_key = os.getenv("OPENAI_API_KEY")
         else:
             openai.api_key = self.api_key.value
-        
+        ctx['openai_api_key'] = openai.api_key
+
+
 @xai_component
 class OpenAIGetModels(Component):
     """Retrieves a list of all models available from OpenAI.
@@ -143,35 +190,102 @@ class OpenAIChat(Component):
         super().__init__()
         
     def execute(self, ctx) -> None:
-        messages = None
         if self.conversation.value is not None:
             messages = self.conversation.value
-        elif self.system_prompt.value is not None:
-            messages = [
-                {"role": "system", "content": self.system_prompt.value},
-                {"role": "user", "content": self.user_prompt.value}
-            ]
         else:
+            messages = []
+        
+        if self.system_prompt.value is not None:            
+            messages.append({"role": "system", "content": self.system_prompt.value})
+        if self.user_prompt.value is not None:
             messages.append({"role": "user", "content": self.user_prompt.value })
         
-        if messages is None:
+        if not messages:
             raise Exception("At least one prompt is required")
         
-        result = openai.ChatCompletion.create(
+        print("sending")
+        for message in messages:
+            print(message)
+        
+        
+        result = openai.chat.completions.create(
             model=self.model_name.value,
             messages=messages,
-            max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
+            max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 128,
             temperature=self.temperature.value if self.temperature.value is not None else 1,
             n=self.count.value if self.count.value is not None else 1
         )
         
 
         if self.count.value is None or self.count.value == 1:
-            response = result['choices'][0]['message']
-            messages.append(response)
-        self.completion.value = result['choices'][0]['message']['content']
+            response = result.choices[0].message
+            messages.append({"role": "assistant", "content": response.content})
+        self.completion.value = result.choices[0].message.content
         self.out_conversation.value = messages
 
+
+@xai_component
+class OpenAIStreamChat(Component):
+    """Interacts with a specified model from OpenAI in a conversation, streams the response.
+
+    #### Reference:
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/completions/create)
+
+    ##### inPorts:
+    - model_name: Name of the model to be used for conversation.
+    - system_prompt: Initial system message to start the conversation.
+    - user_prompt: Initial user message to continue the conversation.
+    - conversation: A list of conversation messages. Each message is a dictionary with a "role" and "content".
+    - max_tokens: The maximum length of the generated text.
+    - temperature: Controls randomness of the output text.
+    - count: Number of responses to generate.
+
+    ##### outPorts:
+    - completion: The generated text of the model's response.
+    - out_conversation: The complete conversation including the model's response.
+    """
+    model_name: InCompArg[str]
+    system_prompt: InArg[str]
+    user_prompt: InArg[str]
+    conversation: InArg[list]
+    max_tokens: InArg[int]
+    temperature: InArg[float]
+    completion_stream: OutArg[any]
+    
+    
+    def execute(self, ctx) -> None:
+        if self.conversation.value is not None:
+            messages = self.conversation.value
+        else:
+            messages = []
+        
+        if self.system_prompt.value is not None:            
+            messages.append({"role": "system", "content": self.system_prompt.value})
+        if self.user_prompt.value is not None:
+            messages.append({"role": "user", "content": self.user_prompt.value })
+        
+        if not messages:
+            raise Exception("At least one prompt is required")
+        
+        print("sending")
+        
+        for message in messages:
+            print(message)
+        
+        
+        result = openai.chat.completions.create(
+            model=self.model_name.value,
+            messages=messages,
+            max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 128,
+            temperature=self.temperature.value if self.temperature.value is not None else 1,
+            stream=True
+        )
+        
+        def extract_text():
+            for chunk in result:
+                yield chunk.choices[0].delta.content
+
+        self.completion_stream.value = extract_text()
 
 @xai_component
 class OpenAIEdit(Component):
@@ -234,13 +348,14 @@ class OpenAIImageCreate(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = openai.Image.create(
+        client = OpenAI(api_key=ctx['openai_api_key'])
+        result = client.images.generate(
             prompt=self.prompt.value,
             n=self.image_count.value if self.image_count.value is not None else 1,
             size=self.size.value if self.size.value is not None else "256x256"
         )
 
-        self.image_urls.value = [d['url'] for d in result['data']]
+        self.image_urls.value = [d.url for d in result.data]
 
 
 
@@ -255,6 +370,26 @@ class DownloadImages(Component):
 
     image_urls: InCompArg[list]
     file_path: InCompArg[list]
+    
+    def execute(self, ctx) -> None:
+        i = 0
+        for image_url in self.image_urls.value:
+            response = requests.get(image_url, stream=True)
+            with open(self.file_path.value[i], 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            i += 1
+
+@xai_component
+class DownloadImage(Component):
+    """Downloads image from the provided URL.
+
+    ##### inPorts:
+    - image_url: URL of image to download.
+    - file_path: file path where the image will be saved.
+    """
+
+    image_url: InCompArg[str]
+    file_path: InCompArg[str]
     
     def execute(self, ctx) -> None:
         i = 0
@@ -287,13 +422,15 @@ class OpenAIImageCreateVariation(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = openai.Image.create_variation(
+        client = OpenAI(api_key=ctx['openai_api_key'])
+
+        result = client.images.create_variation(
             image=open(self.image_path.value, "rb"),
             n=self.image_count.value if self.image_count.value is not None else 1,
             size=self.size.value if self.size.value is not None else "256x256"
         )
 
-        self.image_urls.value = [d['url'] for d in result['data']]
+        self.image_urls.value = [d.url for d in result.data]
         
 @xai_component
 class OpenAIImageEdit(Component):
@@ -322,7 +459,9 @@ class OpenAIImageEdit(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = openai.Image.create_edit(
+        client = OpenAI(api_key=ctx['openai_api_key'])
+
+        result = client.images.edit(
             image=self.image.value,
             mask=self.mask.value,
             prompt=self.prompt.value,
@@ -330,7 +469,7 @@ class OpenAIImageEdit(Component):
             size=self.size.value if self.size.value is not None else "256x256"
         )
 
-        self.image_urls.value = [d['url'] for d in result['data']]
+        self.image_urls.value = [d.url for d in result.data]
         
 @xai_component
 class TakeNthElement(Component):
@@ -406,6 +545,7 @@ class AppendConversationResponse(Component):
 
     ##### inPorts:
     - conversation: List of current conversation messages.
+    - system_message: Message to be appended from the assistant.
     - assistant_message: Message to be appended from the assistant.
 
     ##### outPorts:
@@ -413,11 +553,18 @@ class AppendConversationResponse(Component):
         ie: conversation + [{ 'role': 'assistant', 'content': assistant_message }]
     """
     conversation: InCompArg[list]
-    assistant_message: InCompArg[str]
+    system_message: InArg[str]
+    assistant_message: InArg[str]
     out_conversation: OutArg[list]
     
     def execute(self, ctx) -> None:
-        ret = self.conversation.value + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
+        ret = self.conversation.value
+        
+        if self.system_message.value is not None:
+            ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
+        
+        if self.assistant_message.value is not None:
+            ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
         self.out_conversation.value = ret
 
         
@@ -452,3 +599,30 @@ class JoinConversations(Component):
             
         self.out_conversation.value = ret
 
+
+import json
+import re
+
+def extract_json_object(string):
+    # Regular expression to find a JSON object
+    # It looks for a string that starts with { and ends with }, while ignoring any {} inside
+    json_regex = r'{[^{}]*(?:{[^{}]*}[^{}]*)*}'
+    
+    matches = re.finditer(json_regex, string)
+    for match in matches:
+        try:
+            json_str = match.group(0)
+            json_obj = json.loads(json_str)
+            return json_obj  # Return the valid JSON object as a Python dictionary
+        except json.JSONDecodeError:
+            continue  # If it's not valid JSON, continue looking
+
+    return None  # Return None if no valid JSON object is found
+
+@xai_component
+class OpenAIExtractJsonInString(Component):
+    in_str: InCompArg[str]
+    out_dict: OutArg[dict]
+    
+    def execute(self, ctx) -> None:
+        self.out_dict.value = extract_json_object(self.in_str.value)
