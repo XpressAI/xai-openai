@@ -50,7 +50,10 @@ class OpenAIMakeConversation(Component):
 
 @xai_component
 class OpenAIAuthorize(Component):
-    """Sets the organization and API key for the OpenAI client.
+    """Sets the organization and API key for the OpenAI client and creates an OpenAI client.
+
+    This component checks if the API key should be fetched from the environment variables or from the provided input. 
+    It then creates an OpenAI client using the API key and stores the client in the context (`ctx`) for use by other components.
 
     #### Reference:
     - [OpenAI API](https://platform.openai.com/docs/api-reference/authentication)
@@ -59,6 +62,7 @@ class OpenAIAuthorize(Component):
     - organization: Organization name id for OpenAI API.
     - api_key: API key for the OpenAI API.
     - from_env: Boolean value indicating whether the API key is to be fetched from environment variables. 
+
     """
     organization: InArg[secret]
     base_url: InArg[str]
@@ -66,9 +70,16 @@ class OpenAIAuthorize(Component):
     from_env: InArg[bool]
 
     def execute(self, ctx) -> None:
-        
+        openai.organization = self.organization.value
+        openai.base_url= self.base_url.value
+        if self.from_env.value:
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+        else:
+            openai.api_key = self.api_key.value
+
         client = OpenAI(api_key=self.api_key.value)
         ctx['client'] = client
+        ctx['openai_api_key'] = openai.api_key
         
 
 
