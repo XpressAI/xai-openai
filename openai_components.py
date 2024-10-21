@@ -66,13 +66,10 @@ class OpenAIAuthorize(Component):
     from_env: InArg[bool]
 
     def execute(self, ctx) -> None:
-        openai.organization = self.organization.value
-        openai.base_url= self.base_url.value
-        if self.from_env.value:
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-        else:
-            openai.api_key = self.api_key.value
-        ctx['openai_api_key'] = openai.api_key
+        
+        client = OpenAI(api_key=self.api_key.value)
+        ctx['client'] = client
+        
 
 
 @xai_component
@@ -92,7 +89,9 @@ class OpenAIGetModels(Component):
     models: OutArg[list]
 
     def execute(self, ctx) -> None:
-        self.models.value = openai.Model.list()
+        client = ctx['client']
+        self.models.value = client.models.list()
+
 
 
 @xai_component
@@ -113,7 +112,9 @@ class OpenAIGetModel(Component):
     model: OutArg[any]
 
     def execute(self, ctx) -> None:
-        self.model.value = openai.Model.retrieve(self.model_name.value)
+        client = ctx['client']
+        self.model.value = client.models.retrieve(self.model_name.value)
+
 
 
 
@@ -143,7 +144,8 @@ class OpenAIGenerate(Component):
     completion: OutArg[str]
 
     def execute(self, ctx) -> None:
-        result = openai.Completion.create(
+        client = ctx['client']
+        result = client.completions.create(
             model=self.model_name.value,
             prompt=self.prompt.value,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
@@ -207,8 +209,8 @@ class OpenAIChat(Component):
         for message in messages:
             print(message)
         
-        
-        result = openai.chat.completions.create(
+        client = ctx['client']
+        result = client.chat.completions.create(
             model=self.model_name.value,
             messages=messages,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 128,
@@ -272,8 +274,8 @@ class OpenAIStreamChat(Component):
         for message in messages:
             print(message)
         
-        
-        result = openai.chat.completions.create(
+        client = ctx['client']
+        result = client.chat.completions.create(
             model=self.model_name.value,
             messages=messages,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 128,
@@ -313,7 +315,8 @@ class OpenAIEdit(Component):
     edited: OutArg[any]
 
     def execute(self, ctx) -> None:
-        result = openai.Edit.create(
+        client = ctx['client']
+        result = client.edits.create(
             model=self.model_name.value,
             input=self.prompt.value,
             instruction=self.instruction.value,
@@ -348,7 +351,7 @@ class OpenAIImageCreate(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        client = OpenAI(api_key=ctx['openai_api_key'])
+        client = ctx['client']
         result = client.images.generate(
             prompt=self.prompt.value,
             n=self.image_count.value if self.image_count.value is not None else 1,
@@ -422,8 +425,7 @@ class OpenAIImageCreateVariation(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        client = OpenAI(api_key=ctx['openai_api_key'])
-
+        client = ctx['client']
         result = client.images.create_variation(
             image=open(self.image_path.value, "rb"),
             n=self.image_count.value if self.image_count.value is not None else 1,
@@ -459,8 +461,7 @@ class OpenAIImageEdit(Component):
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
-        client = OpenAI(api_key=ctx['openai_api_key'])
-
+        client = ctx['client']
         result = client.images.edit(
             image=self.image.value,
             mask=self.mask.value,
