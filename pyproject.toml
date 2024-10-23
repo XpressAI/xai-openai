@@ -1,0 +1,15 @@
+[project]
+name = "xai-openai"
+version = "0.1.0"
+description = "Xircuits component library for openai"
+authors = [{ name = "XpressAI", email = "eduardo@xpress.ai" }]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/XpressAI/xai-openai"
+keywords = ["xircuits", "openai"]
+
+# Xircuits-specific configurations
+[tool.xircuits]
+default_example_path = "examples/openai_sample.xircuits"
+requirements_path = "requirements.txt"
+
