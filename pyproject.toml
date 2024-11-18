@@ -8,6 +8,10 @@ readme = "README.md"
 repository = "https://github.com/XpressAI/xai-openai"
 keywords = ["xircuits", "openai"]
 
+dependencies = [
+    "openai==1.52.0"
+]
+
 # Xircuits-specific configurations
 [tool.xircuits]
 default_example_path = "examples/openai_sample.xircuits"
