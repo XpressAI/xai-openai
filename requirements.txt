@@ -14,5 +14,5 @@ jiter==0.8.2
 pydantic==2.10.3
 tqdm==4.67.1
 colorama==0.4.6
-packaging==24.2
+packaging==23.2
 openai==1.57.0
