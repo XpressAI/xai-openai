@@ -1,12 +1,12 @@
 {
     "id": "383ebe4b-bb2c-4b15-bc59-599cbd651168",
-    "offsetX": 285,
+    "offsetX": -42,
     "offsetY": 79,
     "zoom": 100,
     "gridSize": 0,
     "layers": [
         {
-            "id": "4bb6736c-9947-407a-ab3c-0d31bc1a4913",
+            "id": "5d814c1a-a437-40f7-8ede-113e5f96614e",
             "type": "diagram-links",
             "isSvg": true,
             "transformed": true,
@@ -23,13 +23,13 @@
                         {
                             "id": "41f268bd-d879-4d19-8b57-d78f7d2b7fb0",
                             "type": "point",
-                            "x": 157.749981880188,
-                            "y": 87.10000324249268
+                            "x": 119.75001239776611,
+                            "y": 126.10001850128174
                         },
                         {
                             "id": "365f03d3-9921-4dee-bf78-7edc9d9f8194",
                             "type": "point",
-                            "x": 228.10001850128174,
+                            "x": 228.0999879837036,
                             "y": 126.10001850128174
                         }
                     ],
@@ -51,13 +51,13 @@
                         {
                             "id": "fcd499a6-b05a-4af3-ab03-37723d879950",
                             "type": "point",
-                            "x": 366.28751850128174,
+                            "x": 366.2874879837036,
                             "y": 126.10001850128174
                         },
                         {
                             "id": "bdab0726-caff-469b-b704-a7b0bce28ed1",
                             "type": "point",
-                            "x": 441.0999574661255,
+                            "x": 441.0999879837036,
                             "y": 126.10001850128174
                         }
                     ],
@@ -79,14 +79,14 @@
                         {
                             "id": "adedb413-f04f-4297-9e1f-a4626d88c57d",
                             "type": "point",
-                            "x": 586.0125551223755,
+                            "x": 586.0125246047974,
                             "y": 126.10001850128174
                         },
                         {
                             "id": "d0bb47a8-05bd-4d07-ac38-e315fb5afac5",
                             "type": "point",
-                            "x": 725.0999574661255,
-                            "y": 124.10001850128174
+                            "x": 664.1000490188599,
+                            "y": 126.10001850128174
                         }
                     ],
                     "labels": [],
@@ -107,14 +107,14 @@
                         {
                             "id": "30ba27be-9d0f-4d67-8fc9-ece39be27d1c",
                             "type": "point",
-                            "x": 586.0125551223755,
+                            "x": 586.0125246047974,
                             "y": 147.69999408721924
                         },
                         {
                             "id": "08a82bca-24b5-4016-b049-f67cc742d8c3",
                             "type": "point",
-                            "x": 725.0999574661255,
-                            "y": 145.69999408721924
+                            "x": 664.1000490188599,
+                            "y": 147.69999408721924
                         }
                     ],
                     "labels": [],
@@ -135,14 +135,14 @@
                         {
                             "id": "107df06f-3c5c-45bb-bdac-81c040bb5dd8",
                             "type": "point",
-                            "x": 798.1375551223755,
-                            "y": 124.10001850128174
+                            "x": 737.1375246047974,
+                            "y": 126.10001850128174
                         },
                         {
                             "id": "4aacc021-a3fd-4015-bf72-96d6a264d8e1",
                             "type": "point",
-                            "x": 926.0999574661255,
-                            "y": 120.10001850128174
+                            "x": 813.1000490188599,
+                            "y": 126.10001850128174
                         }
                     ],
                     "labels": [],
@@ -163,13 +163,13 @@
                         {
                             "id": "31327d18-abe1-4e54-ac25-caa93b518426",
                             "type": "point",
-                            "x": 135.3375062942505,
-                            "y": 248.10001850128174
+                            "x": 139.3375368118286,
+                            "y": 396.0999879837036
                         },
                         {
                             "id": "8a829edd-2c4f-4fbc-8eb8-341eb1d7639f",
                             "type": "point",
-                            "x": 228.10001850128174,
+                            "x": 228.0999879837036,
                             "y": 212.5000123977661
                         }
                     ],
@@ -191,13 +191,13 @@
                         {
                             "id": "e5ca4f9f-51bf-45d1-ab69-7245747360cf",
                             "type": "point",
-                            "x": -0.7124814987182617,
-                            "y": 99.10000324249268
+                            "x": 147.2750368118286,
+                            "y": 311.10001850128174
                         },
                         {
                             "id": "0ea8b959-073a-404e-a7f0-3b387046b76e",
                             "type": "point",
-                            "x": 228.10001850128174,
+                            "x": 228.0999879837036,
                             "y": 190.9000062942505
                         }
                     ],
@@ -210,7 +210,7 @@
             }
         },
         {
-            "id": "62710257-59fd-4c68-92c7-8b2177523d15",
+            "id": "fcf4f930-ea1d-42a3-a531-f59eb46b18d2",
             "type": "diagram-nodes",
             "isSvg": false,
             "transformed": true,
@@ -223,15 +223,15 @@
                         "type": "Start",
                         "borderColor": "rgb(0,192,255)"
                     },
-                    "x": 90,
-                    "y": 50,
+                    "x": 52,
+                    "y": 89,
                     "ports": [
                         {
                             "id": "fd335b4a-ca78-4931-9ac1-e2e5d3d8fcb6",
                             "type": "default",
                             "extras": {},
-                            "x": 147.44998168945312,
-                            "y": 76.80000305175781,
+                            "x": 109.45001220703125,
+                            "y": 115.80001831054688,
                             "name": "out-0",
                             "alignment": "right",
                             "parentNode": "ad04f0a9-4d5d-4a99-9297-d27b73ef9a39",
@@ -259,15 +259,15 @@
                     "extras": {
                         "type": "boolean"
                     },
-                    "x": 75,
-                    "y": 214,
+                    "x": 79,
+                    "y": 362,
                     "ports": [
                         {
                             "id": "b7a7779c-259a-4432-ac02-960d5d65938b",
                             "type": "default",
                             "extras": {},
-                            "x": 125.03750610351562,
-                            "y": 237.80001831054688,
+                            "x": 129.03753662109375,
+                            "y": 385.79998779296875,
                             "name": "out-0",
                             "alignment": "right",
                             "parentNode": "96835f2f-1dea-4d42-9f2e-668734181c76",
@@ -296,15 +296,15 @@
                         "type": "string",
                         "borderColor": "rgb(0,192,255)"
                     },
-                    "x": -140.61251831054688,
-                    "y": 65,
+                    "x": 7.387481689453125,
+                    "y": 277,
                     "ports": [
                         {
                             "id": "295f1557-d3c3-465a-9c6d-0be5d56241ee",
                             "type": "default",
                             "extras": {},
-                            "x": -11.012481689453125,
-                            "y": 88.80000305175781,
+                            "x": 136.97503662109375,
+                            "y": 300.8000183105469,
                             "name": "parameter-out-0",
                             "alignment": "right",
                             "parentNode": "0590cbbb-2b8b-4a98-95fc-19f9f1dddc4c",
@@ -328,19 +328,19 @@
                 "1ab1fbd5-e13e-4920-a3e6-15b301b76964": {
                     "id": "1ab1fbd5-e13e-4920-a3e6-15b301b76964",
                     "type": "custom-node",
-                    "selected": true,
+                    "selected": false,
                     "extras": {
                         "type": "Finish"
                     },
-                    "x": 915,
-                    "y": 83,
+                    "x": 802,
+                    "y": 89,
                     "ports": [
                         {
                             "id": "eef1c0ad-de79-4ad4-a1c8-677e0d50e542",
                             "type": "default",
                             "extras": {},
-                            "x": 915.7999572753906,
-                            "y": 109.80001831054688,
+                            "x": 802.800048828125,
+                            "y": 115.80001831054688,
                             "name": "in-0",
                             "alignment": "left",
                             "parentNode": "1ab1fbd5-e13e-4920-a3e6-15b301b76964",
@@ -357,8 +357,8 @@
                             "id": "7a7c6d0d-17b5-4a71-b087-5afedec45bb8",
                             "type": "default",
                             "extras": {},
-                            "x": 915.7999572753906,
-                            "y": 131.39999389648438,
+                            "x": 802.800048828125,
+                            "y": 137.39999389648438,
                             "name": "parameter-dynalist-outputs",
                             "alignment": "left",
                             "parentNode": "1ab1fbd5-e13e-4920-a3e6-15b301b76964",
@@ -386,7 +386,7 @@
                 "a63179ed-4906-4495-9ccb-b64aab714f95": {
                     "id": "a63179ed-4906-4495-9ccb-b64aab714f95",
                     "type": "custom-node",
-                    "selected": true,
+                    "selected": false,
                     "extras": {
                         "type": "library_component",
                         "path": "xai_components/xai_openai/openai_components.py",
@@ -405,7 +405,7 @@
                             "id": "1fce56aa-2349-42ae-9cf9-74e879feeef7",
                             "type": "default",
                             "extras": {},
-                            "x": 217.80001831054688,
+                            "x": 217.79998779296875,
                             "y": 115.80001831054688,
                             "name": "in-0",
                             "alignment": "left",
@@ -423,7 +423,7 @@
                             "id": "34ce8af5-cd0a-487c-bea5-e053cde0c2b2",
                             "type": "default",
                             "extras": {},
-                            "x": 217.80001831054688,
+                            "x": 217.79998779296875,
                             "y": 137.39999389648438,
                             "name": "parameter-secret-organization",
                             "alignment": "left",
@@ -439,7 +439,7 @@
                             "id": "a330ac59-270d-48bf-ab59-4efc3a65d306",
                             "type": "default",
                             "extras": {},
-                            "x": 217.80001831054688,
+                            "x": 217.79998779296875,
                             "y": 159,
                             "name": "parameter-string-base_url",
                             "alignment": "left",
@@ -455,7 +455,7 @@
                             "id": "f8d56f1a-a3fd-476e-87fd-91d98698d00e",
                             "type": "default",
                             "extras": {},
-                            "x": 217.80001831054688,
+                            "x": 217.79998779296875,
                             "y": 180.60000610351562,
                             "name": "parameter-secret-api_key",
                             "alignment": "left",
@@ -473,7 +473,7 @@
                             "id": "17da65b5-af27-45b3-ad15-d872ac3d52e5",
                             "type": "default",
                             "extras": {},
-                            "x": 217.80001831054688,
+                            "x": 217.79998779296875,
                             "y": 202.20001220703125,
                             "name": "parameter-boolean-from_env",
                             "alignment": "left",
@@ -491,7 +491,7 @@
                             "id": "63282525-9329-4f5d-84db-ee3ac90c51ac",
                             "type": "default",
                             "extras": {},
-                            "x": 355.9875183105469,
+                            "x": 355.98748779296875,
                             "y": 115.80001831054688,
                             "name": "out-0",
                             "alignment": "right",
@@ -522,7 +522,7 @@
                 "35d1a84b-8a70-4aca-91bd-2d3a9ed36d3e": {
                     "id": "35d1a84b-8a70-4aca-91bd-2d3a9ed36d3e",
                     "type": "custom-node",
-                    "selected": true,
+                    "selected": false,
                     "extras": {
                         "type": "library_component",
                         "path": "xai_components/xai_openai/openai_components.py",
@@ -541,7 +541,7 @@
                             "id": "28dfbb88-9f04-4f64-9c3b-dc2325f37cd4",
                             "type": "default",
                             "extras": {},
-                            "x": 430.7999572753906,
+                            "x": 430.79998779296875,
                             "y": 115.80001831054688,
                             "name": "in-0",
                             "alignment": "left",
@@ -559,7 +559,7 @@
                             "id": "67ed2c3f-e794-494f-aa98-2ef76b0d6fae",
                             "type": "default",
                             "extras": {},
-                            "x": 575.7125549316406,
+                            "x": 575.7125244140625,
                             "y": 115.80001831054688,
                             "name": "out-0",
                             "alignment": "right",
@@ -577,7 +577,7 @@
                             "id": "e88a972d-b9a7-4129-9f90-7a3c084ceb17",
                             "type": "default",
                             "extras": {},
-                            "x": 575.7125549316406,
+                            "x": 575.7125244140625,
                             "y": 137.39999389648438,
                             "name": "parameter-out-list-models",
                             "alignment": "right",
@@ -604,8 +604,9 @@
                 },
                 "8ee83117-5968-434b-aca6-dec113cf6da9": {
                     "id": "8ee83117-5968-434b-aca6-dec113cf6da9",
+                    "locked": false,
                     "type": "custom-node",
-                    "selected": true,
+                    "selected": false,
                     "extras": {
                         "type": "library_component",
                         "path": "xai_components/xai_utils/utils.py",
@@ -617,15 +618,15 @@
                             }
                         ]
                     },
-                    "x": 714,
-                    "y": 87,
+                    "x": 653,
+                    "y": 89,
                     "ports": [
                         {
                             "id": "219e5675-7efb-41f6-a061-46468fdcece8",
                             "type": "default",
                             "extras": {},
-                            "x": 714.7999572753906,
-                            "y": 113.80001831054688,
+                            "x": 653.800048828125,
+                            "y": 115.80001831054688,
                             "name": "in-0",
                             "alignment": "left",
                             "parentNode": "8ee83117-5968-434b-aca6-dec113cf6da9",
@@ -642,8 +643,8 @@
                             "id": "ce08d9af-4939-438e-835a-2ff6a2087911",
                             "type": "default",
                             "extras": {},
-                            "x": 714.7999572753906,
-                            "y": 135.39999389648438,
+                            "x": 653.800048828125,
+                            "y": 137.39999389648438,
                             "name": "parameter-any-msg",
                             "alignment": "left",
                             "parentNode": "8ee83117-5968-434b-aca6-dec113cf6da9",
@@ -660,8 +661,8 @@
                             "id": "94128cc4-f311-40d9-8378-faa0f0c170ed",
                             "type": "default",
                             "extras": {},
-                            "x": 787.8375549316406,
-                            "y": 113.80001831054688,
+                            "x": 726.8375244140625,
+                            "y": 115.80001831054688,
                             "name": "out-0",
                             "alignment": "right",
                             "parentNode": "8ee83117-5968-434b-aca6-dec113cf6da9",
