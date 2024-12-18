@@ -9,7 +9,7 @@ repository = "https://github.com/XpressAI/xai-openai"
 keywords = ["xircuits", "openai"]
 
 dependencies = [
-    "openai==1.52.0"
+    "openai==1.57"
 ]
 
 # Xircuits-specific configurations
