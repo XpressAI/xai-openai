@@ -5,7 +5,7 @@ from openai import OpenAI
 import os
 import requests
 import shutil
-
+import base64
 
 class Conversation:
     def __init__(self):
@@ -18,35 +18,48 @@ class Conversation:
     def display_conversation(self, detailed=False):
         for message in self.conversation_history:
             print(f"{message['role']}: {message['content']}\n\n")
-            
+
+def image_to_data_uri(image_path):
+    with open(image_path, "rb") as image_file:
+        base64_image = base64.b64encode(image_file.read()).decode("utf-8")
+        data_uri = f"data:image/jpeg;base64,{base64_image}"
+        return data_uri
+
 @xai_component
 class OpenAIMakeConversation(Component):
     """Creates a conversation object to hold conversation history.
     """
-    
-    prev: InArg[Conversation]
+    prev: InArg[list]
     system_msg: InArg[str]
     user_msg: InArg[str]
+    user_img: InArg[str]
     assistant_msg: InArg[str]
     function_msg: InArg[str]
-    
-    conversation: OutArg[Conversation]
-    
+
+    conversation: OutArg[list]
+
     def execute(self, ctx) -> None:
         conv = Conversation()
+
         if self.prev.value is not None:
-            conv.conversation_history.extend(self.prev.value.conversation_history)
+            if isinstance(self.prev.value, list):
+                conv.conversation_history.extend(self.prev.value)
+            else:
+                conv.conversation_history.extend(self.prev.value.conversation_history)
         if self.system_msg.value is not None:
             conv.add_message("system", self.system_msg.value)
-        if self.user_msg.value is not None:
+        if self.user_msg.value is not None and self.user_img.value is None:
             conv.add_message("user", self.user_msg.value)
+        if self.user_img.value is not None:
+            image_url = image_to_data_uri(self.user_img.value)
+
+            conv.add_message("user", [{ "type": "text", "text": self.user_msg.value }, { "type": "image_url", "image_url": { "url": image_url } } ])
         if self.assistant_msg.value is not None:
             conv.add_message("assistant", self.assistant_msg.value)
         if self.function_msg.value is not None:
             conv.add_message("function", self.function_msg.value)
-            
-        self.conversation.value = conv
 
+        self.conversation.value = conv.conversation_history
 
 @xai_component
 class OpenAIAuthorize(Component):
@@ -80,8 +93,6 @@ class OpenAIAuthorize(Component):
         client = OpenAI(api_key=self.api_key.value)
         ctx['client'] = client
         ctx['openai_api_key'] = openai.api_key
-        
-
 
 @xai_component
 class OpenAIGetModels(Component):
@@ -126,8 +137,78 @@ class OpenAIGetModel(Component):
         client = ctx['client']
         self.model.value = client.models.retrieve(self.model_name.value)
 
+@xai_component
+class OpenAIImageInference(Component):
+    """
+    Infers the content of an image using OpenAI's Vision capabilities.
 
+    ##### inPorts:
+    - model_name: The name of the OpenAI model to be used for inference.
+    - image_input: Path to the image file (local path or URL). The component determines if it's a URL or a file path.
+    - detail: Level of detail for inference. Options: "low", "high", or "auto". Default is "low".
+    - input_prompt: Optional. A custom prompt to specify the question for the image inference. Default is "What is in this image?".
 
+    ##### outPorts:
+    - inference: The model's interpretation of the image.
+    """
+
+    model_name: InCompArg[str]
+    image_input: InCompArg[str]
+    detail: InArg[str]
+    input_prompt: InArg[str]
+    inference: OutArg[str]
+
+    def execute(self, ctx) -> None:
+        client = ctx.get("client")
+        if client is None:
+            raise ValueError("OpenAI client not found in context. Ensure OpenAI authorization is configured.")
+
+        image_content = None
+        input_value = self.image_input.value
+
+        # Check if the input is a URL
+        if input_value.startswith("http://") or input_value.startswith("https://"):
+            image_content = {
+                "type": "image_url",
+                "image_url": {
+                    "url": input_value,
+                    "detail": self.detail.value if self.detail.value else "low"
+                }
+            }
+        # Check if the input is a valid file path
+        elif os.path.isfile(input_value):
+            data_uri = image_to_data_uri(input_value)
+            image_content = {
+                "type": "image_url",
+                "image_url": {
+                    "url": data_uri,
+                    "detail": self.detail.value if self.detail.value else "low"
+                }
+            }
+        else:
+            raise ValueError("Image input must be a valid URL or file path. The provided input is invalid.")
+
+        # Use the custom input prompt if provided, otherwise use the default
+        prompt = self.input_prompt.value if self.input_prompt.value else "What is in this image?"
+
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    image_content
+                ]
+            }
+        ]
+
+        try:
+            result = client.chat.completions.create(
+                model=self.model_name.value,
+                messages=messages,
+            )
+            self.inference.value = result.choices[0].message.content
+        except Exception as e:
+            raise RuntimeError(f"Failed to infer image: {e}")
 
 @xai_component
 class OpenAIGenerate(Component):

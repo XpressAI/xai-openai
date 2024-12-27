@@ -14,6 +14,6 @@ dependencies = [
 
 # Xircuits-specific configurations
 [tool.xircuits]
-default_example_path = "examples/openai_sample.xircuits"
+default_example_path = "examples/image_inference.xircuits"
 requirements_path = "requirements.txt"
 
