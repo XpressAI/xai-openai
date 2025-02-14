@@ -90,7 +90,7 @@ class OpenAIAuthorize(Component):
         else:
             openai.api_key = self.api_key.value
 
-        client = OpenAI(api_key=self.api_key.value)
+        client = OpenAI(api_key=openai.api_key, organization=openai.organization, base_url=openai.base_url)
         ctx['client'] = client
         ctx['openai_api_key'] = openai.api_key
 
