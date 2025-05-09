@@ -83,16 +83,18 @@ class OpenAIAuthorize(Component):
     from_env: InArg[bool]
 
     def execute(self, ctx) -> None:
-        openai.organization = self.organization.value
-        openai.base_url= self.base_url.value
         if self.from_env.value:
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv("OPENAI_API_KEY")
         else:
-            openai.api_key = self.api_key.value
+            api_key = self.api_key.value
 
-        client = OpenAI(api_key=openai.api_key, organization=openai.organization, base_url=openai.base_url)
+        client = OpenAI(
+            api_key=api_key,
+            organization=self.organization.value,
+            base_url=self.base_url.value
+        )
         ctx['client'] = client
-        ctx['openai_api_key'] = openai.api_key
+        ctx['openai_api_key'] = api_key
 
 @xai_component
 class OpenAIGetModels(Component):
@@ -237,18 +239,19 @@ class OpenAIGenerate(Component):
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.completions.create(
+        messages = [{"role": "user", "content": self.prompt.value}]
+        result = client.chat.completions.create(
             model=self.model_name.value,
-            prompt=self.prompt.value,
+            messages=messages,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
             temperature=self.temperature.value if self.temperature.value is not None else 1,
             n=self.count.value if self.count.value is not None else 1
         )
 
         if self.count.value is None or self.count.value == 1:
-            self.completion.value = result['choices'][0]['text']
+            self.completion.value = result.choices[0].message.content
         else:
-            self.completion.value = [r['text'] for r in result['choices']]
+            self.completion.value = [choice.message.content for choice in result.choices]
 
 @xai_component
 class OpenAIChat(Component):
@@ -380,46 +383,6 @@ class OpenAIStreamChat(Component):
                 yield chunk.choices[0].delta.content
 
         self.completion_stream.value = extract_text()
-
-@xai_component
-class OpenAIEdit(Component):
-    """Edits text using a specified model from OpenAI.
-
-    #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/edits/create)
-
-    ##### inPorts:
-    - model_name: Name of the model to be used for text editing.
-    - prompt: The initial text to edit from.
-    - instruction: Instructions for the edit.
-    - count: Number of edited texts to generate.
-    - temperature: Controls randomness of the output text.
-
-    ##### outPorts:
-    - edited: The edited text.
-    """
-    
-    model_name: InCompArg[str]
-    prompt: InCompArg[str]
-    instruction: InCompArg[str]
-    count: InArg[int]
-    temperature: InArg[float]
-    edited: OutArg[any]
-
-    def execute(self, ctx) -> None:
-        client = ctx['client']
-        result = client.edits.create(
-            model=self.model_name.value,
-            input=self.prompt.value,
-            instruction=self.instruction.value,
-            n=self.count.value if self.count.value is not None else 1,
-            temperature=self.temperature.value if self.temperature.value is not None else 1
-        )
-
-        if self.count.value is None or self.count.value == 1:
-            self.edited.value = result['choices'][0]['text']
-        else:
-            self.edited.value = [r['text'] for r in result['choices']]
 
 @xai_component
 class OpenAIImageCreate(Component):
