@@ -191,24 +191,28 @@ class OpenAIImageInference(Component):
             raise ValueError("Image input must be a valid URL or file path. The provided input is invalid.")
 
         # Use the custom input prompt if provided, otherwise use the default
-        prompt = self.input_prompt.value if self.input_prompt.value else "What is in this image?"
+        prompt_text = self.input_prompt.value if self.input_prompt.value else "What is in this image?"
 
-        messages = [
+        # The image_content already has the structure: {"type": "image_url", "image_url": {"url": ..., "detail": ...}}
+        # For the new API, the image part needs to be directly image_content's "image_url" value.
+        # And the type for the image part should be "input_image".
+        
+        input_payload = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
-                    image_content
+                    {"type": "input_text", "text": prompt_text},
+                    {"type": "input_image", "image_url": image_content["image_url"]}
                 ]
             }
         ]
 
         try:
-            result = client.chat.completions.create(
+            result = client.responses.create(
                 model=self.model_name.value,
-                messages=messages,
+                input=input_payload
             )
-            self.inference.value = result.choices[0].message.content
+            self.inference.value = result.output_text
         except Exception as e:
             raise RuntimeError(f"Failed to infer image: {e}")
 
