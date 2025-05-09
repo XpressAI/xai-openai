@@ -83,16 +83,18 @@ class OpenAIAuthorize(Component):
     from_env: InArg[bool]
 
     def execute(self, ctx) -> None:
-        openai.organization = self.organization.value
-        openai.base_url= self.base_url.value
         if self.from_env.value:
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv("OPENAI_API_KEY")
         else:
-            openai.api_key = self.api_key.value
+            api_key = self.api_key.value
 
-        client = OpenAI(api_key=openai.api_key, organization=openai.organization, base_url=openai.base_url)
+        client = OpenAI(
+            api_key=api_key,
+            organization=self.organization.value,
+            base_url=self.base_url.value
+        )
         ctx['client'] = client
-        ctx['openai_api_key'] = openai.api_key
+        ctx['openai_api_key'] = api_key
 
 @xai_component
 class OpenAIGetModels(Component):
@@ -189,24 +191,28 @@ class OpenAIImageInference(Component):
             raise ValueError("Image input must be a valid URL or file path. The provided input is invalid.")
 
         # Use the custom input prompt if provided, otherwise use the default
-        prompt = self.input_prompt.value if self.input_prompt.value else "What is in this image?"
+        prompt_text = self.input_prompt.value if self.input_prompt.value else "What is in this image?"
 
-        messages = [
+        # The image_content already has the structure: {"type": "image_url", "image_url": {"url": ..., "detail": ...}}
+        # For the new API, the image part needs to be directly image_content's "image_url" value.
+        # And the type for the image part should be "input_image".
+        
+        input_payload = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
-                    image_content
+                    {"type": "input_text", "text": prompt_text},
+                    {"type": "input_image", "image_url": image_content["image_url"]}
                 ]
             }
         ]
 
         try:
-            result = client.chat.completions.create(
+            result = client.responses.create(
                 model=self.model_name.value,
-                messages=messages,
+                input=input_payload
             )
-            self.inference.value = result.choices[0].message.content
+            self.inference.value = result.output_text
         except Exception as e:
             raise RuntimeError(f"Failed to infer image: {e}")
 
@@ -237,18 +243,19 @@ class OpenAIGenerate(Component):
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.completions.create(
+        messages = [{"role": "user", "content": self.prompt.value}]
+        result = client.chat.completions.create(
             model=self.model_name.value,
-            prompt=self.prompt.value,
+            messages=messages,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
             temperature=self.temperature.value if self.temperature.value is not None else 1,
             n=self.count.value if self.count.value is not None else 1
         )
 
         if self.count.value is None or self.count.value == 1:
-            self.completion.value = result['choices'][0]['text']
+            self.completion.value = result.choices[0].message.content
         else:
-            self.completion.value = [r['text'] for r in result['choices']]
+            self.completion.value = [choice.message.content for choice in result.choices]
 
 @xai_component
 class OpenAIChat(Component):
@@ -380,46 +387,6 @@ class OpenAIStreamChat(Component):
                 yield chunk.choices[0].delta.content
 
         self.completion_stream.value = extract_text()
-
-@xai_component
-class OpenAIEdit(Component):
-    """Edits text using a specified model from OpenAI.
-
-    #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/edits/create)
-
-    ##### inPorts:
-    - model_name: Name of the model to be used for text editing.
-    - prompt: The initial text to edit from.
-    - instruction: Instructions for the edit.
-    - count: Number of edited texts to generate.
-    - temperature: Controls randomness of the output text.
-
-    ##### outPorts:
-    - edited: The edited text.
-    """
-    
-    model_name: InCompArg[str]
-    prompt: InCompArg[str]
-    instruction: InCompArg[str]
-    count: InArg[int]
-    temperature: InArg[float]
-    edited: OutArg[any]
-
-    def execute(self, ctx) -> None:
-        client = ctx['client']
-        result = client.edits.create(
-            model=self.model_name.value,
-            input=self.prompt.value,
-            instruction=self.instruction.value,
-            n=self.count.value if self.count.value is not None else 1,
-            temperature=self.temperature.value if self.temperature.value is not None else 1
-        )
-
-        if self.count.value is None or self.count.value == 1:
-            self.edited.value = result['choices'][0]['text']
-        else:
-            self.edited.value = [r['text'] for r in result['choices']]
 
 @xai_component
 class OpenAIImageCreate(Component):
