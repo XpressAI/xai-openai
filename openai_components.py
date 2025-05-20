@@ -213,15 +213,17 @@ class OpenAIImageInference(Component):
 @xai_component
 class OpenAIGenerate(Component):
     """Generates text using a specified model from OpenAI.
+    
+    Note: This uses chat completions API as the completions API is deprecated.
 
     #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/completions/create)
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/chat)
 
     ##### inPorts:
     - model_name: Name of the model to be used for text generation.
     - prompt: The initial text to generate from.
-    - max_tokens: The maximum length of the generated text.
-    - temperature: Controls randomness of the output text.
+    - max_tokens: The maximum length of the generated text. Default 16.
+    - temperature: Controls randomness of the output text. Default 1.0.
     - count: Number of completions to generate.
 
     ##### outPorts:
@@ -233,22 +235,25 @@ class OpenAIGenerate(Component):
     max_tokens: InArg[int]
     temperature: InArg[float]
     count: InArg[int]
-    completion: OutArg[str]
+    completion: OutArg[any]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.completions.create(
+        
+        messages = [{"role": "user", "content": self.prompt.value}]
+        
+        result = client.chat.completions.create(
             model=self.model_name.value,
-            prompt=self.prompt.value,
+            messages=messages,
             max_tokens=self.max_tokens.value if self.max_tokens.value is not None else 16,
             temperature=self.temperature.value if self.temperature.value is not None else 1,
             n=self.count.value if self.count.value is not None else 1
         )
-
+        
         if self.count.value is None or self.count.value == 1:
-            self.completion.value = result['choices'][0]['text']
+            self.completion.value = result.choices[0].message.content
         else:
-            self.completion.value = [r['text'] for r in result['choices']]
+            self.completion.value = [r.message.content for r in result.choices]
 
 @xai_component
 class OpenAIChat(Component):
@@ -383,17 +388,18 @@ class OpenAIStreamChat(Component):
 
 @xai_component
 class OpenAIEdit(Component):
-    """Edits text using a specified model from OpenAI.
+    """Edits text using OpenAI's chat completions API.
+    
+    Note: This component replaces the deprecated edits endpoint.
 
     #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/edits/create)
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/chat)
 
     ##### inPorts:
     - model_name: Name of the model to be used for text editing.
-    - prompt: The initial text to edit from.
+    - prompt: The initial text to edit.
     - instruction: Instructions for the edit.
-    - count: Number of edited texts to generate.
-    - temperature: Controls randomness of the output text.
+    - temperature: Controls randomness of the output text. Default 1.0.
 
     ##### outPorts:
     - edited: The edited text.
@@ -402,24 +408,25 @@ class OpenAIEdit(Component):
     model_name: InCompArg[str]
     prompt: InCompArg[str]
     instruction: InCompArg[str]
-    count: InArg[int]
     temperature: InArg[float]
-    edited: OutArg[any]
+    edited: OutArg[str]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.edits.create(
+        
+        # Replicate old edit functionality using chat completions
+        messages = [
+            {"role": "system", "content": f"You are an AI that edits text according to instructions. Apply this instruction: {self.instruction.value}"},
+            {"role": "user", "content": self.prompt.value}
+        ]
+        
+        result = client.chat.completions.create(
             model=self.model_name.value,
-            input=self.prompt.value,
-            instruction=self.instruction.value,
-            n=self.count.value if self.count.value is not None else 1,
+            messages=messages,
             temperature=self.temperature.value if self.temperature.value is not None else 1
         )
 
-        if self.count.value is None or self.count.value == 1:
-            self.edited.value = result['choices'][0]['text']
-        else:
-            self.edited.value = [r['text'] for r in result['choices']]
+        self.edited.value = result.choices[0].message.content
 
 @xai_component
 class OpenAIImageCreate(Component):
@@ -430,25 +437,42 @@ class OpenAIImageCreate(Component):
 
     ##### inPorts:
     - prompt: The text from which to generate images.
+    - model: The model to use for image generation. Default is "dall-e-2".
     - image_count: Number of images to generate. Default `1`.
-    - size: The size of the generated images. Default "256x256".
+    - size: The size of the generated images. Default "1024x1024".
+    - quality: The quality of the generated images (only for DALL-E 3). Default "standard".
+    - style: The style of the generated images (only for DALL-E 3). Default "vivid".
 
     ##### outPorts:
     - image_urls: The URLs of the generated images.
     """
 
     prompt: InCompArg[str]
+    model: InArg[str]
     image_count: InArg[int]
     size: InArg[str]
+    quality: InArg[str]
+    style: InArg[str]
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.images.generate(
-            prompt=self.prompt.value,
-            n=self.image_count.value if self.image_count.value is not None else 1,
-            size=self.size.value if self.size.value is not None else "256x256"
-        )
+        
+        # Setup parameters with defaults
+        params = {
+            "prompt": self.prompt.value,
+            "n": self.image_count.value if self.image_count.value is not None else 1,
+            "size": self.size.value if self.size.value is not None else "1024x1024",
+            "model": self.model.value if self.model.value is not None else "dall-e-2"
+        }
+        
+        # Add DALL-E 3 specific parameters if using that model
+        if params["model"] == "dall-e-3":
+            params["quality"] = self.quality.value if self.quality.value is not None else "standard"
+            params["style"] = self.style.value if self.style.value is not None else "vivid"
+            
+        # Generate images
+        result = client.images.generate(**params)
 
         self.image_urls.value = [d.url for d in result.data]
 
@@ -487,12 +511,9 @@ class DownloadImage(Component):
     file_path: InCompArg[str]
     
     def execute(self, ctx) -> None:
-        i = 0
-        for image_url in self.image_urls.value:
-            response = requests.get(image_url, stream=True)
-            with open(self.file_path.value[i], 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            i += 1
+        response = requests.get(self.image_url.value, stream=True)
+        with open(self.file_path.value, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
 
 
 @xai_component
@@ -504,25 +525,38 @@ class OpenAIImageCreateVariation(Component):
 
     ##### inPorts:
     - image_path: Path to the image file for which variations will be created.
+    - model: The model to use for image variation. Default is "dall-e-2".
     - image_count: Number of image variations to generate. Default `1`.
-    - size: The size of the generated images. Default "256x256".
+    - size: The size of the generated images. Default "1024x1024".
 
     ##### outPorts:
     - image_urls: The URLs of the generated image variations.
     """
 
     image_path: InCompArg[str]
+    model: InArg[str]
     image_count: InArg[int]
     size: InArg[str]
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.images.create_variation(
-            image=open(self.image_path.value, "rb"),
-            n=self.image_count.value if self.image_count.value is not None else 1,
-            size=self.size.value if self.size.value is not None else "256x256"
-        )
+        
+        # Open the image file for variation
+        with open(self.image_path.value, "rb") as image_file:
+            # Prepare parameters with defaults
+            params = {
+                "image": image_file,
+                "n": self.image_count.value if self.image_count.value is not None else 1,
+                "size": self.size.value if self.size.value is not None else "1024x1024",
+            }
+            
+            # Add model parameter if provided
+            if self.model.value is not None:
+                params["model"] = self.model.value
+            
+            # Create variation
+            result = client.images.create_variation(**params)
 
         self.image_urls.value = [d.url for d in result.data]
         
@@ -536,31 +570,45 @@ class OpenAIImageEdit(Component):
 
     ##### inPorts:
     - prompt: The instruction for the image edit.
-    - image: The original image to be edited.
-    - mask: An optional mask for the edit.
+    - image_path: The path to the original image to be edited.
+    - mask_path: An optional path to the mask image.
     - image_count: Number of edited images to generate. Default `1`.
-    - size: The size of the edited images. Default "256 x 256"
+    - size: The size of the edited images. Default "1024x1024"
 
     ##### outPorts:
     - image_urls: The URLs of the edited images.
     """
 
-    prompt:InCompArg[str]
-    image: InCompArg[any]
-    mask: InArg[any]
+    prompt: InCompArg[str]
+    image_path: InCompArg[str]
+    mask_path: InArg[str]
     image_count: InArg[int]
     size: InArg[str]
     image_urls: OutArg[list]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
-        result = client.images.edit(
-            image=self.image.value,
-            mask=self.mask.value,
-            prompt=self.prompt.value,
-            n=self.image_count.value if self.image_count.value is not None else 1,
-            size=self.size.value if self.size.value is not None else "256x256"
-        )
+        
+        # Open the image file
+        with open(self.image_path.value, "rb") as image_file:
+            # If mask is provided, open it
+            mask_file = None
+            if self.mask_path.value:
+                with open(self.mask_path.value, "rb") as mask:
+                    result = client.images.edit(
+                        prompt=self.prompt.value,
+                        image=image_file,
+                        mask=mask,
+                        n=self.image_count.value if self.image_count.value is not None else 1,
+                        size=self.size.value if self.size.value is not None else "1024x1024"
+                    )
+            else:
+                result = client.images.edit(
+                    prompt=self.prompt.value,
+                    image=image_file,
+                    n=self.image_count.value if self.image_count.value is not None else 1,
+                    size=self.size.value if self.size.value is not None else "1024x1024"
+                )
 
         self.image_urls.value = [d.url for d in result.data]
         
@@ -692,6 +740,157 @@ class JoinConversations(Component):
             
         self.out_conversation.value = ret
 
+
+@xai_component
+class OpenAIAudioTranscription(Component):
+    """Transcribes audio into text using a specified model from OpenAI.
+
+    #### Reference:
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/audio)
+
+    ##### inPorts:
+    - file_path: Path to the audio file to transcribe.
+    - model: ID of the model to use. Default is "whisper-1".
+    - language: The language of the input audio. Default is None (auto-detect).
+    - prompt: Optional text to guide the model's style or continue a previous audio segment.
+    - response_format: The format of the transcript output. Default is "text".
+    - temperature: Controls randomness of the output. Default is 0.
+
+    ##### outPorts:
+    - transcription: The transcribed text.
+    """
+
+    file_path: InCompArg[str]
+    model: InArg[str]
+    language: InArg[str]
+    prompt: InArg[str]
+    response_format: InArg[str]
+    temperature: InArg[float]
+    transcription: OutArg[str]
+
+    def execute(self, ctx) -> None:
+        client = ctx['client']
+        
+        # Prepare parameters
+        params = {
+            "file": open(self.file_path.value, "rb"),
+            "model": self.model.value if self.model.value is not None else "whisper-1",
+            "response_format": self.response_format.value if self.response_format.value is not None else "text",
+            "temperature": self.temperature.value if self.temperature.value is not None else 0
+        }
+        
+        # Add optional parameters if provided
+        if self.language.value is not None:
+            params["language"] = self.language.value
+            
+        if self.prompt.value is not None:
+            params["prompt"] = self.prompt.value
+            
+        # Call the API
+        result = client.audio.transcriptions.create(**params)
+        
+        # Extract the transcription based on response format
+        if self.response_format.value == "verbose_json" or self.response_format.value == "json":
+            self.transcription.value = result.text
+        else:
+            self.transcription.value = result
+
+@xai_component
+class OpenAIAudioTranslation(Component):
+    """Translates audio into English text using a specified model from OpenAI.
+
+    #### Reference:
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/audio)
+
+    ##### inPorts:
+    - file_path: Path to the audio file to translate.
+    - model: ID of the model to use. Default is "whisper-1".
+    - prompt: Optional text to guide the model's style or continue a previous audio segment.
+    - response_format: The format of the translation output. Default is "text".
+    - temperature: Controls randomness of the output. Default is 0.
+
+    ##### outPorts:
+    - translation: The translated text.
+    """
+
+    file_path: InCompArg[str]
+    model: InArg[str]
+    prompt: InArg[str]
+    response_format: InArg[str]
+    temperature: InArg[float]
+    translation: OutArg[str]
+
+    def execute(self, ctx) -> None:
+        client = ctx['client']
+        
+        # Prepare parameters
+        params = {
+            "file": open(self.file_path.value, "rb"),
+            "model": self.model.value if self.model.value is not None else "whisper-1",
+            "response_format": self.response_format.value if self.response_format.value is not None else "text",
+            "temperature": self.temperature.value if self.temperature.value is not None else 0
+        }
+        
+        # Add optional prompt if provided
+        if self.prompt.value is not None:
+            params["prompt"] = self.prompt.value
+            
+        # Call the API
+        result = client.audio.translations.create(**params)
+        
+        # Extract the translation based on response format
+        if self.response_format.value == "verbose_json" or self.response_format.value == "json":
+            self.translation.value = result.text
+        else:
+            self.translation.value = result
+
+@xai_component
+class OpenAISpeechGeneration(Component):
+    """Generates audio from text input using a specified model from OpenAI.
+
+    #### Reference:
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/audio/createSpeech)
+
+    ##### inPorts:
+    - model: ID of the model to use. Default is "tts-1".
+    - input_text: The text to generate audio for.
+    - voice: The voice to use. Default is "alloy".
+    - response_format: The format of the audio. Default is "mp3".
+    - speed: The speed of the generated audio. Default is 1.0.
+    - output_file: Path to save the generated audio file.
+
+    ##### outPorts:
+    - output_path: Path to the generated audio file.
+    """
+
+    model: InArg[str]
+    input_text: InCompArg[str]
+    voice: InArg[str]
+    response_format: InArg[str]
+    speed: InArg[float]
+    output_file: InCompArg[str]
+    output_path: OutArg[str]
+
+    def execute(self, ctx) -> None:
+        client = ctx['client']
+        
+        # Prepare parameters
+        params = {
+            "model": self.model.value if self.model.value is not None else "tts-1",
+            "input": self.input_text.value,
+            "voice": self.voice.value if self.voice.value is not None else "alloy",
+            "response_format": self.response_format.value if self.response_format.value is not None else "mp3"
+        }
+        
+        # Add optional speed if provided
+        if self.speed.value is not None:
+            params["speed"] = self.speed.value
+            
+        # Call the API with stream to a file
+        response = client.audio.speech.create(**params)
+        response.stream_to_file(self.output_file.value)
+        
+        self.output_path.value = self.output_file.value
 
 import json
 import re
