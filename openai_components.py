@@ -400,6 +400,7 @@ class OpenAIEdit(Component):
     - prompt: The initial text to edit.
     - instruction: Instructions for the edit.
     - temperature: Controls randomness of the output text. Default 1.0.
+    - system_prompt: Custom system prompt to instruct the AI model. Defaults to a prompt instructing the AI to edit text according to provided instructions.
 
     ##### outPorts:
     - edited: The edited text.
@@ -409,14 +410,16 @@ class OpenAIEdit(Component):
     prompt: InCompArg[str]
     instruction: InCompArg[str]
     temperature: InArg[float]
+    system_prompt: InArg[str]
     edited: OutArg[str]
 
     def execute(self, ctx) -> None:
         client = ctx['client']
         
         # Replicate old edit functionality using chat completions
+        default_system_prompt = f"You are an AI that edits text according to instructions. Apply this instruction: {self.instruction.value}"
         messages = [
-            {"role": "system", "content": f"You are an AI that edits text according to instructions. Apply this instruction: {self.instruction.value}"},
+            {"role": "system", "content": self.system_prompt.value if self.system_prompt.value is not None else default_system_prompt},
             {"role": "user", "content": self.prompt.value}
         ]
         
