@@ -83,7 +83,7 @@ Edits input text based on specific instructions provided.
 
 ### OpenAIImageCreate Component:
 
-Generates images from text prompts using OpenAI's image models.
+Generates images from text prompts using OpenAI's image models. Supports both DALL-E 2 and DALL-E 3.
 
 ### OpenAIImageCreateVariation Component:
 
@@ -92,6 +92,22 @@ Creates alternate versions of an input image using OpenAI's variation tools.
 ### OpenAIImageEdit Component:
 
 Modifies an input image based on a text prompt or a mask.
+
+### OpenAIImageInference Component:
+
+Analyzes images using OpenAI's vision capabilities, providing text descriptions or answers to questions about images.
+
+### OpenAIAudioTranscription Component:
+
+Transcribes audio files to text using OpenAI's Whisper models.
+
+### OpenAIAudioTranslation Component:
+
+Translates audio in any language to English text using OpenAI's Whisper models.
+
+### OpenAISpeechGeneration Component:
+
+Converts text to spoken audio using OpenAI's text-to-speech models.
 
 ## Try the Examples
 
