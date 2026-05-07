@@ -202,7 +202,7 @@ class OpenAIImageInference(Component):
                 "role": "user",
                 "content": [
                     {"type": "input_text", "text": prompt_text},
-                    {"type": "input_image", "image_url": image_content["image_url"]}
+                    {"type": "input_image", "image_url": image_content["image_url"]["url"], "detail": image_content["image_url"]["detail"]}
                 ]
             }
         ]
@@ -454,12 +454,9 @@ class DownloadImage(Component):
     file_path: InCompArg[str]
     
     def execute(self, ctx) -> None:
-        i = 0
-        for image_url in self.image_urls.value:
-            response = requests.get(image_url, stream=True)
-            with open(self.file_path.value[i], 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            i += 1
+        response = requests.get(self.image_url.value, stream=True)
+        with open(self.file_path.value, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
 
 
 @xai_component
@@ -621,7 +618,7 @@ class AppendConversationResponse(Component):
         ret = self.conversation.value
         
         if self.system_message.value is not None:
-            ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
+            ret = ret + [{ 'role': 'system', 'content': self.system_message.value}]
         
         if self.assistant_message.value is not None:
             ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]

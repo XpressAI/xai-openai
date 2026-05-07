@@ -77,10 +77,6 @@ Fetches a list of available OpenAI models for use in workflows.
 
 Retrieves detailed information about a specific OpenAI model.
 
-### OpenAIEdit Component:
-
-Edits input text based on specific instructions provided.
-
 ### OpenAIImageCreate Component:
 
 Generates images from text prompts using OpenAI's image models.
