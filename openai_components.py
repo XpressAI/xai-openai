@@ -705,7 +705,7 @@ class AppendConversationResponse(Component):
         ret = self.conversation.value
         
         if self.system_message.value is not None:
-            ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
+            ret = ret + [{ 'role': 'system', 'content': self.system_message.value}]
         
         if self.assistant_message.value is not None:
             ret = ret + [{ 'role': 'assistant', 'content': self.assistant_message.value}]
