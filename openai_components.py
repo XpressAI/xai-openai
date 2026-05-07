@@ -221,7 +221,7 @@ class OpenAIGenerate(Component):
     """Generates text using a specified model from OpenAI.
 
     #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/completions/create)
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/chat/create)
 
     ##### inPorts:
     - model_name: Name of the model to be used for text generation.
@@ -262,7 +262,7 @@ class OpenAIChat(Component):
     """Interacts with a specified model from OpenAI in a conversation.
 
     #### Reference:
-    - [OpenAI API](https://platform.openai.com/docs/api-reference/completions/create)
+    - [OpenAI API](https://platform.openai.com/docs/api-reference/chat/create)
 
     ##### inPorts:
     - model_name: Name of the model to be used for conversation.
